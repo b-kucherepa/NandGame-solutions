@@ -1,0 +1,31 @@
+# Assembler code 
+PUSH_STATIC ARGS
+PUSH_STATIC LOCALS
+PUSH_VALUE Return
+
+A=SP
+D=*A
+A=3
+D=D-A
+A=argumentCount
+D=D-A
+A=ARGS
+*A=D
+
+GOTO functionName
+
+LABEL Return:
+A=ARGS
+D=*A
+A=TEMP
+*A=D
+
+POP_STATIC LOCALS
+POP_STATIC ARGS
+
+A=TEMP
+A=*A
+D=A
+A=SP
+*A=D
+PUSH_STATIC RETVAL

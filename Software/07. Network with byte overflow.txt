@@ -1,0 +1,93 @@
+# Assembler code 
+#constants:
+DEFINE netAddr 0x6001  
+DEFINE bit00 0b_0000_0000_0000_001
+DEFINE bit01 0b_000_0000_0000_010
+
+#variables
+DEFINE drawnBit 0x6002
+DEFINE prevSync 0x6003
+DEFINE dispAddr 0x6004
+
+#clears the "drawing buit"
+A=0x0000
+D=A
+A=drawnBit
+*A=D
+#cleans the previous SYNC recording
+A=prevSync
+*A=D
+#sets the drawing byte adress
+A=0x3FE0
+D=A
+A=dispAddr
+*A=D
+
+LABEL Main:
+#waits when next bit arrives
+A=bit01
+D=A
+A=netAddr
+A=*A
+D=D&A
+
+#loops if the SYNC bit hasn't updated 
+A=prevSync
+A=*A
+D=D-A
+A=Main 
+D; JEQ
+
+#updates last SYNC state
+A=bit01
+D=A
+A=netAddr
+A=*A
+D=D&A
+A=prevSync
+*A=D
+
+#checks if it's a START or STOP bit
+A=drawnBit
+D=*A 
+A=CtrlBits
+D; JEQ
+
+#checks if the DATA bit is zero
+A=bit00
+D=A
+A=netAddr
+D=D&*A
+A=ShiftBit
+D; JEQ
+
+#adds a bit to displayed address 
+A=drawnBit
+D=*A
+A=dispAddr
+A=*A
+*A=D+*A
+
+LABEL ShiftBit:
+A=drawnBit
+D=*A
+*A=D+*A
+A=Main
+JMP
+
+LABEL CtrlBits:
+#takes DATA bit and...
+A=bit00
+D=A
+A=netAddr
+D=D&*A
+#...adds it to drawnBit (it allows to  
+#distinct the START and the END bits)
+A=drawnBit
+*A=D+*A
+A=0x0020
+D=A
+A=dispAddr
+*A=D+*A
+A=Main
+JMP

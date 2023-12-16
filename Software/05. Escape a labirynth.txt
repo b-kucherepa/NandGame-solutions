@@ -1,0 +1,53 @@
+# Assembler code 
+#Bit signals:
+#Move forward = 0x4
+#Turn left = 0x8
+#Turn right (reduntant) = 0x8
+#Is turning || moving forward = 0x600 
+LABEL Main:
+    A=0x7FFF
+    D=*A
+    #if free and no obstacles:
+    A=forward
+    D ; JEQ
+    #else robot turns left
+    A=TurnLeft
+    JMP
+
+LABEL Forward:
+    A=0x4
+    D=A
+    A=0x7FFF
+    *A=D
+    #software waits for hardware
+    A=Waiting
+    JMP
+
+LABEL TurnLeft:
+    A=0x8
+    D=A
+    A=0x7FFF
+    *A=D
+    A=Waiting
+    JMP
+
+#reduntant but was implemented just in case
+LABEL TurnRight:
+    A=0x6
+    D=A
+    A=0x7FFF
+    *A=D
+    A=Waiting
+    JMP
+
+LABEL Waiting:
+    A=0x600 
+    D=A
+    A=0x7FFF
+    D = D & *A 
+    #if robot's still moving, keep waiting
+    A=Waiting
+    D ; JNE
+#else start the cycle again 
+A=Main
+JMP

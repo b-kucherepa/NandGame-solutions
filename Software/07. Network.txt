@@ -1,0 +1,108 @@
+# Assembler code 
+#constants:
+DEFINE netAddr 0x6001  
+DEFINE stopBit 0b_1000_0000_0000_000
+DEFINE bit00 0b_0000_0000_0000_001
+DEFINE bit01 0b_000_0000_0000_010
+
+#variables
+DEFINE drawnBit 0x6002
+DEFINE prevSync 0x6003
+DEFINE dispAddr 0x6004
+
+#clears the bit to be displayed
+A=0x0000
+D=A
+A=drawnBit
+*A=D
+#cleans the previous sync data
+A=prevSync
+*A=D
+#sets the drawing byte adress
+A=0x4000
+D=A
+A=dispAddr
+*A=D
+
+LABEL Main:
+#waits when next bit arrives
+A=bit01
+D=A
+A=netAddr
+A=*A
+D=D&A
+
+#loops if the sync bit hasn't updated 
+A=prevSync
+A=*A
+D=D-A
+A=Main 
+D; JEQ
+
+#updates last sync state
+A=bit01
+D=A
+A=netAddr
+A=*A
+D=D&A
+A=prevSync
+*A=D
+
+#checks if it's a stop bit
+A=stopBit
+D=A
+A=drawnBit
+A=*A 
+D=A-D
+A=EndTrans
+D; JGT
+
+#checks if the data bit is zero
+A=bit00
+D=A
+A=netAddr
+D=D&*A
+A=ShiftBit
+D; JEQ
+
+#checks if it's a start bit
+A=drawnBit 
+D=*A
+A=0x0000
+D=D-A
+A=BgnTrans
+D; JEQ
+
+#adds a bit
+A=drawnBit
+D=*A
+A=dispAddr
+A=*A
+*A=D+*A
+A=ShiftBit
+JMP
+
+LABEL BgnTrans:
+A=drawnBit
+*A=*A+1
+A=Main
+JMP
+
+LABEL ShiftBit:
+A=drawnBit
+D=*A
+*A=D+*A
+A=Main
+JMP
+
+LABEL EndTrans:
+A=0x0000
+D=A
+A=drawnBit
+*A=D
+A=0x0020
+D=A
+A=dispAddr
+*A=D+*A
+A=Main
+JMP
